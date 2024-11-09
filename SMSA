@@ -1,0 +1,75 @@
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+public class SentimentAnalysis {
+    private static final Set<String> POSITIVE_WORDS = new HashSet<>(Arrays.asList("good", "happy", "excellent", "positive", "amazing", "great", "fantastic", "love"));
+    private static final Set<String> NEGATIVE_WORDS = new HashSet<>(Arrays.asList("bad", "sad", "terrible", "horrible", "negative", "hate", "angry", "worse"));
+
+    public static void main(String[] args) {
+        try {
+            File csvFile = new File("social_media_posts.csv");
+            FileReader reader = new FileReader(csvFile);
+            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+            int positiveCount = 0, negativeCount = 0, neutralCount = 0;
+
+            for (CSVRecord record : csvParser) {
+                String text = record.get("text");
+                String sentiment = analyzeSentiment(text);
+
+                switch (sentiment) {
+                    case "Positive":
+                        positiveCount++;
+                        break;
+                    case "Negative":
+                        negativeCount++;
+                        break;
+                    default:
+                        neutralCount++;
+                        break;
+                }
+            }
+
+            csvParser.close();
+            System.out.println("Sentiment Analysis of Social Media Posts:");
+            System.out.println("Positive: " + positiveCount);
+            System.out.println("Negative: " + negativeCount);
+            System.out.println("Neutral: " + neutralCount);
+        } catch (IOException e) {
+            System.err.println("Error reading the CSV file: " + e.getMessage());
+        }
+    }
+
+    private static String analyzeSentiment(String text) {
+        text = text.toLowerCase();
+        int positiveScore = 0;
+        int negativeScore = 0;
+
+        String[] words = text.split("\\s+");
+        for (String word : words) {
+            word = word.replaceAll("[^a-zA-Z]", ""); // Clean word
+
+            if (POSITIVE_WORDS.contains(word)) {
+                positiveScore++;
+            } else if (NEGATIVE_WORDS.contains(word)) {
+                negativeScore++;
+            }
+        }
+
+        if (positiveScore > negativeScore) {
+            return "Positive";
+        } else if (negativeScore > positiveScore) {
+            return "Negative";
+        } else {
+            return "Neutral";
+        }
+    }
+}
